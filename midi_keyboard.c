@@ -8,13 +8,49 @@
 //--------------------------------------------------------------------
 // Matrix Keyboard Configuration
 //--------------------------------------------------------------------
-const uint ROWS = 6;
-const uint COLS = 11;
+const uint ROWS = 11;
+const uint COLS = 6;
 
-uint row_pins[6] = {5, 6, 7, 8, 9, 10};
-uint col_pins[11] = {0, 1, 2, 3, 4, 11, 12, 13, 14, 16, 18};
+uint row_pins[11] = {0,1,2,3,4,11,12,13,17,18,19};
+uint col_pins[6] = {20, 6, 7, 8, 9, 21};
 
-uint8_t key_state[6][11] = {0};  // 1 = pressed, 0 = released
+uint8_t note_map[11][6] = {
+    // Row 0
+    {36, 37, 38, 40, 39, 41},   // C2..F2
+
+    // Row 1
+    {42, 43, 44, 46, 45, 47},
+
+    // Row 2
+    {48, 49, 50, 52, 51, 53},
+
+    // Row 3
+    {54, 55, 56, 58, 57, 59},
+
+    // Row 4
+    {60, 61, 62, 64, 63, 65},
+
+    // Row 5
+    {66, 67, 68, 70, 69, 71},
+
+    // Row 6
+    {72, 73, 74, 76, 75, 77},
+
+    // Row 7
+    {78, 79, 80, 82, 81, 83},
+
+    // Row 8
+    {84, 85, 86, 88, 87, 89},
+
+    // Row 9
+    {90, 91, 92, 94, 93, 95},
+
+    // Row 10
+    {96, 97, 98, 100, 99, 101}
+};
+
+
+uint8_t key_state[11][6] = {0};  // 1 = pressed, 0 = released
 const uint LED_PIN = 25;
 
 void matrix_init() {
@@ -26,7 +62,7 @@ void matrix_init() {
     for (int c = 0; c < COLS; c++) {
         gpio_init(col_pins[c]);
         gpio_set_dir(col_pins[c], GPIO_IN);
-        gpio_pull_up(col_pins[c]);
+        gpio_pull_down(col_pins[c]);
     }
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
@@ -35,7 +71,7 @@ void matrix_init() {
 
 // convert (row, col) → MIDI note
 uint8_t get_note(int r, int c) {
-    return 0 + (r * COLS) + c;   // start at C2
+    return note_map[r][c];
 }
 
 //--------------------------------------------------------------------
@@ -59,14 +95,16 @@ void send_note_off(uint8_t note) {
 void scan_row(int r, bool *any_pressed) {
     // deactivate all rows
     for (int i = 0; i < ROWS; i++) {
-        gpio_put(row_pins[i], 1);
+        gpio_put(row_pins[i], 0);
     }
 
-    gpio_put(row_pins[r], 0);  // activate row
+
+
+    gpio_put(row_pins[r], 1);  // activate row
     sleep_us(30);
 
     for (int c = 0; c < COLS; c++) {
-        uint8_t pressed = (gpio_get(col_pins[c]) == 0);
+        bool pressed = gpio_get(col_pins[c]);
 
         if (pressed && !key_state[r][c]) {
             uint8_t note = get_note(r, c);
